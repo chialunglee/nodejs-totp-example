@@ -1,4 +1,10 @@
 const httpStatus = require('http-status');
+const {
+  Totp,
+  generateBackupCodes,
+} = require('time2fa');
+const bcrypt = require('bcryptjs');
+const config = require('../config/config');
 const tokenService = require('./token.service');
 const userService = require('./user.service');
 const Token = require('../models/token.model');
@@ -90,10 +96,136 @@ const verifyEmail = async (verifyEmailToken) => {
   }
 };
 
+/**
+ * Generate totp url
+ * @param {User} user
+ * @returns {Promise<Object>}
+ */
+const generateTotpUrl = async (user) => {
+  try {
+    if (!user) {
+      throw new Error();
+    }
+
+    const key = Totp.generateKey({ issuer: config.mfa.issuer, user: user.email });
+
+    return key;
+  } catch (error) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'MFA setup fail');
+  }
+};
+
+/**
+ * confirm totp url
+ * @param {User} user
+ * @returns {Promise}
+ */
+const confirmTotpUrl = async (user, mfaToken) => {
+  try {
+    if (!user) {
+      throw new Error();
+    }
+
+    const isValid = Totp.validate({ passcode: mfaToken, secret: user.mfaTempSecret });
+
+    if (isValid) {
+      await userService.updateUserById(user.id, {
+        mfaSecret: user.mfaTempSecret,
+        mfaTempSecret: null,
+      });
+      // req.session.mfaTempSecret = null;  // 清除会话中的临时密钥
+    } else {
+      throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid MFA token');
+    }
+  } catch (error) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'MFA confirm fail');
+  }
+};
+
+/**
+ * check totp token
+ * @param {User} user
+ * @returns {Promise<User>}
+ */
+const checkTotp = async (user, mfaToken) => {
+  try {
+    if (!user) {
+      throw new Error();
+    }
+
+    const isValid = Totp.validate({ passcode: mfaToken, secret: user.mfaSecret });
+
+    if (isValid) {
+      // 發另一個 jwt
+      return user;
+    } else {
+      throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid MFA token');
+    }
+  } catch (error) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'MFA check fail');
+  }
+};
+
+/**
+ * confirm totp url
+ * @param {User} user
+ * @returns {Promise<string[]>}
+ */
+const generateAndSaveMfabackupCodes = async (user) => {
+  try {
+    if (!user) {
+      throw new Error();
+    }
+
+    const backupCodes = generateBackupCodes();
+    const hashedBackupCodes = Promise.all(backupCodes.map((backupCode) => bcrypt.hash(backupCode, 8)));
+
+    await userService.updateUserById(user.id, {
+      backupCodes: hashedBackupCodes,
+    });
+
+    return backupCodes;
+  } catch (error) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'backup codes setup fail');
+  }
+};
+
+/**
+ * confirm totp url
+ * @param {User} user
+ * @returns {Promise}
+ */
+const checkMfaBackupCode = async (user, backupCode) => {
+  try {
+    if (!user) {
+      throw new Error();
+    }
+
+    const matchingCodeIndex = user.backupCodes.findIndex((hashedCode) => bcrypt.compareSync(backupCode, hashedCode));
+
+    if (matchingCodeIndex === -1) {
+      throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid backup code');
+    }
+
+    user.backupCodes.splice(matchingCodeIndex, 1);
+    // await user.save();
+    await userService.updateUserById(user.id, {
+      backupCodes: user.backupCodes,
+    });
+  } catch (error) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'backup code check fail');
+  }
+};
+
 module.exports = {
   loginUserWithEmailAndPassword,
   logout,
   refreshAuth,
   resetPassword,
   verifyEmail,
+  generateTotpUrl,
+  confirmTotpUrl,
+  checkTotp,
+  generateAndSaveMfabackupCodes,
+  checkMfaBackupCode,
 };

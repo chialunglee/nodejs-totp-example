@@ -113,6 +113,25 @@ const generateVerifyEmailToken = async (user) => {
   return verifyEmailToken;
 };
 
+/**
+ * Generate verify mfa token
+ * @param {User} user
+ * @returns {Promise<string>}
+ */
+const generateVerifyMfaToken = async (user) => {
+  const expires = moment().add(config.jwt.verifyMfaExpirationMinutes, 'minutes');
+  const verifyMfaToken = generateToken(user.id, expires, tokenTypes.VERIFY_MFA);
+  await saveToken(verifyMfaToken, user.id, expires, tokenTypes.VERIFY_MFA);
+
+  // return verifyMfaToken;
+  return {
+    verifyMfa: {
+      token: verifyMfaToken,
+      expires,
+    },
+  };
+};
+
 module.exports = {
   generateToken,
   saveToken,
@@ -120,4 +139,5 @@ module.exports = {
   generateAuthTokens,
   generateResetPasswordToken,
   generateVerifyEmailToken,
+  generateVerifyMfaToken,
 };

@@ -49,6 +49,25 @@ const verifyEmail = {
   }),
 };
 
+// TODO
+const confirmMfa = {
+  body: Joi.object().keys({
+    mfaToken: Joi.string().required(),
+  }),
+};
+
+const checkMfa = {
+  body: Joi.object().keys({
+    mfaToken: Joi.string().required(),
+  }),
+};
+
+const checkMfaBackupCode = {
+  body: Joi.object().keys({
+    backupCode: Joi.string().required(),
+  }),
+};
+
 module.exports = {
   register,
   login,
@@ -57,4 +76,7 @@ module.exports = {
   forgotPassword,
   resetPassword,
   verifyEmail,
+  confirmMfa,
+  checkMfa,
+  checkMfaBackupCode,
 };

@@ -44,6 +44,21 @@ const userSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    mfaSecret: {
+      type: String,
+      default: null,
+      private: true, // used by the toJSON plugin
+    },
+    mfaTempSecret: {
+      type: String,
+      default: null,
+      private: true, // used by the toJSON plugin
+    },
+    backupCodes: {
+      type: Array,
+      default: [],
+      private: true, // used by the toJSON plugin
+    }
   },
   {
     timestamps: true,
