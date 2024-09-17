@@ -300,3 +300,184 @@ module.exports = router;
  *               code: 401
  *               message: verify email failed
  */
+
+/**
+ * @swagger
+ * /auth/setup-mfa:
+ *   get:
+ *     summary: setup totp mfa
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 totpUrl:
+ *                   type: string
+ *                 manualSetupKey:
+ *                   type: string
+ *               example:
+ *                 totpUrl: otpauth://totp/N0C:sheep%40example.com?issuer=N0C&period=30&secret=TUGCJB4QOYSDRYBQ
+ *                 manualSetupKey: TUGCJB4QOYSDRYBQ
+ *       "401":
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+
+/**
+ * @swagger
+ * /auth/confirm-mfa:
+ *   post:
+ *     summary: final step of setup totp mfa
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - mfaToken
+ *             properties:
+ *               mfaToken:
+ *                 type: string
+ *             example:
+ *               mfaToken: 123456
+ *     responses:
+ *       "204":
+ *         description: No content
+ *       "400":
+ *         $ref: '#/components/responses/InvalidMfaToken'
+ *       "401":
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+
+/**
+ * @swagger
+ * /auth/remove-mfa:
+ *   get:
+ *     summary: disable your totp mfa
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       "204":
+ *         description: No content
+ *       "401":
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+
+/**
+ * @swagger
+ * /auth/check-mfa:
+ *   post:
+ *     summary: Login with 2 step verification
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - mfaToken
+ *             properties:
+ *               mfaToken:
+ *                 type: string
+ *             example:
+ *               mfaToken: 123456
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *                 tokens:
+ *                   $ref: '#/components/schemas/AuthTokens'
+ *       "400":
+ *         $ref: '#/components/responses/InvalidMfaToken'
+ *       "401":
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+
+/**
+ * @swagger
+ * /auth/mfa-backup-codes:
+ *   get:
+ *     summary: setup mfa backup codes
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 backupCodes:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                     example: 123456
+ *       "401":
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+
+/**
+ * @swagger
+ * /auth/check-mfa-backup-code:
+ *   post:
+ *     summary: consume one backup code to login
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 format: password
+ *             example:
+ *               email: fake@example.com
+ *               password: password1
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *                 tokens:
+ *                   $ref: '#/components/schemas/AuthTokens'
+ *       "400":
+ *         $ref: '#/components/responses/InvalidBackupCode'
+ *       "401":
+ *         $ref: '#/components/responses/Unauthorized'
+ */

@@ -1,4 +1,5 @@
 const httpStatus = require('http-status');
+const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
 const { authService, userService, tokenService, emailService } = require('../services');
 
@@ -61,7 +62,12 @@ const setupMfa = catchAsync(async (req, res) => {
 });
 
 const confirmMfa = catchAsync(async (req, res) => {
-  await authService.confirmTotpUrl(req.user, req.body.mfaToken);
+  const isMfaTokenValid = await authService.confirmTotpUrl(req.user, req.body.mfaToken);
+
+  if (!isMfaTokenValid) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid MFA token');
+  }
+
   res.status(httpStatus.NO_CONTENT).send();
 });
 
@@ -71,7 +77,12 @@ const removeMfa = catchAsync(async (req, res) => {
 });
 
 const checkMfa = catchAsync(async (req, res) => {
-  await authService.checkTotp(req.user, req.body.mfaToken);
+  const isMfaTokenValid = await authService.checkTotp(req.user, req.body.mfaToken);
+
+  if (!isMfaTokenValid) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid MFA token');
+  }
+
   // 有執行到這邊，代表已通過檢查了，要不然早就已經 throw err 了
   const tokens = await tokenService.generateAuthTokens(req.user);
   // res.status(httpStatus.NO_CONTENT).send();
@@ -87,7 +98,12 @@ const generateAndSaveMfabackupCodes = catchAsync(async (req, res) => {
 });
 
 const checkMfaBackupCode = catchAsync(async (req, res) => {
-  await authService.checkMfaBackupCode(req.user, req.body.backupCode);
+  const isBackupCodeValid = await authService.checkMfaBackupCode(req.user, req.body.backupCode);
+
+  if (!isBackupCodeValid) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid backup code');
+  }
+
   // 有執行到這邊，代表已通過檢查了，要不然早就已經 throw err 了
   const tokens = await tokenService.generateAuthTokens(req.user);
   // res.status(httpStatus.NO_CONTENT).send();

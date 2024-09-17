@@ -111,7 +111,7 @@ const generateTotpUrl = async (user) => {
 
     return key;
   } catch (error) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'MFA setup fail');
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
   }
 };
 
@@ -133,12 +133,11 @@ const confirmTotpUrl = async (user, mfaToken) => {
         mfaSecret: user.mfaTempSecret,
         mfaTempSecret: null,
       });
-      // req.session.mfaTempSecret = null;  // 清除会话中的临时密钥
-    } else {
-      throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid MFA token');
     }
+
+    return isValid;
   } catch (error) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'MFA confirm fail');
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
   }
 };
 
@@ -155,14 +154,9 @@ const checkTotp = async (user, mfaToken) => {
 
     const isValid = Totp.validate({ passcode: mfaToken, secret: user.mfaSecret });
 
-    if (isValid) {
-      // 發另一個 jwt
-      return user;
-    } else {
-      throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid MFA token');
-    }
+    return isValid;
   } catch (error) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'MFA check fail');
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
   }
 };
 
@@ -178,7 +172,7 @@ const generateAndSaveMfabackupCodes = async (user) => {
     }
 
     const backupCodes = generateBackupCodes();
-    const hashedBackupCodes = Promise.all(backupCodes.map((backupCode) => bcrypt.hash(backupCode, 8)));
+    const hashedBackupCodes = await Promise.all(backupCodes.map((backupCode) => bcrypt.hash(backupCode, 8)));
 
     await userService.updateUserById(user.id, {
       backupCodes: hashedBackupCodes,
@@ -186,7 +180,7 @@ const generateAndSaveMfabackupCodes = async (user) => {
 
     return backupCodes;
   } catch (error) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'backup codes setup fail');
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
   }
 };
 
@@ -204,7 +198,7 @@ const checkMfaBackupCode = async (user, backupCode) => {
     const matchingCodeIndex = user.backupCodes.findIndex((hashedCode) => bcrypt.compareSync(backupCode, hashedCode));
 
     if (matchingCodeIndex === -1) {
-      throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid backup code');
+      return false;
     }
 
     user.backupCodes.splice(matchingCodeIndex, 1);
@@ -212,8 +206,10 @@ const checkMfaBackupCode = async (user, backupCode) => {
     await userService.updateUserById(user.id, {
       backupCodes: user.backupCodes,
     });
+
+    return true;
   } catch (error) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'backup code check fail');
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
   }
 };
 

@@ -57,6 +57,24 @@ components:
           example:
             code: 400
             message: Email already taken
+    InvalidMfaToken:
+      description: Invalid MFA token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 400
+            message: Invalid MFA token
+    InvalidBackupCode:
+      description: Invalid backup code
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 400
+            message: Invalid backup code
     Unauthorized:
       description: Unauthorized
       content:
