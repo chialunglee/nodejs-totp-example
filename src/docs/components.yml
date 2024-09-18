@@ -39,6 +39,25 @@ components:
         refresh:
           $ref: '#/components/schemas/Token'
 
+    BackupCodes:
+      type: array
+      items:
+        type: string
+      minItems: 10
+      maxItems: 10
+      example:
+        backupCodes:
+          - "000001"
+          - "000002"
+          - "000003"
+          - "000004"
+          - "000005"
+          - "000006"
+          - "000007"
+          - "000008"
+          - "000009"
+          - "000010"
+
     Error:
       type: object
       properties:

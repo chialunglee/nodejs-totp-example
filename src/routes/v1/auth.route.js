@@ -429,10 +429,7 @@ module.exports = router;
  *               type: object
  *               properties:
  *                 backupCodes:
- *                   type: array
- *                   items:
- *                     type: string
- *                     example: 123456
+ *                   $ref: '#/components/schemas/BackupCodes'
  *       "401":
  *         $ref: '#/components/responses/Unauthorized'
  */
@@ -452,18 +449,12 @@ module.exports = router;
  *           schema:
  *             type: object
  *             required:
- *               - email
- *               - password
+ *               - backupCode
  *             properties:
- *               email:
+ *               backupCode:
  *                 type: string
- *                 format: email
- *               password:
- *                 type: string
- *                 format: password
  *             example:
- *               email: fake@example.com
- *               password: password1
+ *               backupCode: 123456
  *     responses:
  *       "200":
  *         description: OK
